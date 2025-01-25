@@ -113,7 +113,19 @@ def list_media_items(service, start_date, end_date):
 def download_media(media_item, download_folder):
     """Download a media item using the correct method."""
     filename = media_item['filename']
-    file_url = media_item['baseUrl'] + '=d'  # Append '=d' to get the download URL
+
+    mime_type = media_item['mimeType']
+
+    if 'image' in mime_type:
+        file_url = media_item['baseUrl'] + '=d'  # Download highest quality image
+    elif 'video' in mime_type:
+        file_url = media_item['baseUrl'] + '=dv'  # Use '=dv' for high-quality video download
+    else:
+        print("Unknown media type")
+        exit()
+
+
+    # obsolete file_url = media_item['baseUrl'] + '=dv'  # Append '=d' to get the download URL
     save_path = os.path.join(download_folder, filename)
 
     response = requests.get(file_url, stream=True)  # Use requests to download

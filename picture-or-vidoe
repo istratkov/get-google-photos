@@ -1,0 +1,46 @@
+import requests
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+
+# Authenticate using your credentials (ensure 'token.json' exists after authentication)
+creds = Credentials.from_authorized_user_file('token.json')
+
+# Build the Google Photos service
+service = build('photoslibrary', 'v1', credentials=creds, 
+                discoveryServiceUrl="https://photoslibrary.googleapis.com/$discovery/rest?version=v1")
+
+# Replace with the actual media item ID from your Google Photos library
+media_item_id = 'your_media_item_id_here'
+
+# Get media item details
+response = service.mediaItems().get(mediaItemId=media_item_id).execute()
+
+# Extract media item details
+base_url = response.get('baseUrl')
+mime_type = response.get('mimeType')
+
+if base_url:
+    # Determine file extension based on mime type
+    if 'image' in mime_type:
+        file_extension = '.jpg'
+        download_url = f"{base_url}=d"  # Download highest quality image
+    elif 'video' in mime_type:
+        file_extension = '.mov'
+        download_url = f"{base_url}=dv"  # Use '=dv' for high-quality video download
+    else:
+        print("Unknown media type")
+        exit()
+
+    # Download the media file
+    response = requests.get(download_url, stream=True)
+
+    if response.status_code == 200:
+        file_name = f"downloaded_media{file_extension}"
+        with open(file_name, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                file.write(chunk)
+        print(f"File downloaded successfully as {file_name}")
+    else:
+        print(f"Failed to download media. Status code: {response.status_code}")
+else:
+    print("No media URL found.")
